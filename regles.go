@@ -14,6 +14,8 @@ func transformer(texte string) string {
 		mots := strings.Fields(ligne)
 		mots = appliquerMarqueur(mots)
 		mots = appliquerPonctuation(mots)
+		mots = appliquerApostrophe(mots)
+		mots = appliquerArticle(mots)
 		lignes[i] = strings.Join(mots, " ")
 	}
 	return strings.Join(lignes, "\n")
@@ -70,6 +72,31 @@ func appliquerMarqueur(mots []string) []string {
 
 }
 
+func appliquerApostrophe(mots []string) []string {
+	var result []string
+	ouvert := false
+	for i := 0; i < len(mots); i++ {
+		mot := mots[i]
+		if mot == "'" {
+			//debut de l'apostrophe avec un mot
+			if !ouvert && i+1 < len(mots) {
+				mots[i+1] = "'" + mots[i+1]
+				ouvert = true
+				continue
+			}
+			if ouvert && len(result) > 0 {
+				result[len(result)-1] += "'"
+				ouvert = false
+				continue
+			}
+		}
+		result = append(result, mot)
+
+	}
+	return result
+
+}
+
 // capitaliser change les premiere lettre en majuscule
 func capitaliser(mot string) string {
 	if mot == "" {
@@ -99,12 +126,57 @@ func binTodec(mot string) string {
 }
 
 func ponctuation(r rune) bool {
-	return r == '.' || r == ',' || r == '!' || r == '?'
+	return r == '.' || r == ',' || r == '!' || r == '?' || r == ':'
+}
+func estPonctuation(mots string) bool {
+	for _, r := range mots {
+		if !ponctuation(r) {
+			return false
+		}
+	}
+	return true
 }
 func appliquerPonctuation(mots []string) []string {
 	var result []string
+	//cas ou on trouve !! ?? ou ...
 	for _, mot := range mots {
+		if estPonctuation(mot) && len(result) > 0 {
+			result[len(result)-1] += mot
+			continue
+		}
+
+		//trouve une ponctuation
+		fin := 0
+		for fin < len(mot) && ponctuation(rune(mot[fin])) {
+			fin++
+		}
+		if fin > 0 && len(result) > 0 {
+			result[len(result)-1] += mot[:fin]
+			mot = mot[fin:]
+		}
+
 		result = append(result, mot)
 	}
 	return result
+}
+
+// voyelle
+
+func estVoyelle(v rune) bool {
+	v = unicode.ToLower(v)
+	return v == 'a' || v == 'e' || v == 'i' || v == 'o' || v == 'u' || v == 'h'
+}
+
+func appliquerArticle(mots []string) []string {
+
+	for i := 0; i < len(mots); i++ {
+		if (mots[i] == "a" || mots[i] == "A") && i+1 < len(mots) {
+			premiere := []rune(mots[i+1])[0]
+			if estVoyelle(premiere) {
+				mots[i] = mots[i] + "n"
+			}
+		}
+	}
+
+	return mots
 }
