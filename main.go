@@ -6,23 +6,31 @@ import (
 )
 
 func main() {
+
 	if len(os.Args) != 3 {
-		fmt.Println("il manque un fichier")
-		return
+		fmt.Println("veillez entrer deux fichier ")
+		os.Exit(1)
 	}
 
-	test := os.Args[1]
-	result := os.Args[2]
-	contenu, err := os.ReadFile(test)
-	if err != nil {
-		fmt.Println(err)
-		return
+	entree := os.Args[1]
+	sortie := os.Args[2]
+	if entree == sortie {
+		fmt.Fprintln(os.Stderr, "Erreur : le fichier d'entrée et le fichier de sortie doivent être différents")
+		os.Exit(1)
 	}
 
-	err = os.WriteFile(result, contenu, 0644)
+	contenue, err := lecture(entree)
 	if err != nil {
-		fmt.Println(err)
-		return
+		fmt.Println("Erreur", err)
+		os.Exit(1)
 	}
+	resultat := transformer(contenue)
+	err = ecriture(sortie, resultat)
+	if err != nil {
+		fmt.Println("erreur", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Terminé:", sortie, "a été creé")
 
 }
